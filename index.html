@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Pro - Liga de Ajedrez</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #eef2f7;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .search-container {
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 25px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            outline: none;
+        }
+
+        .table-container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        th {
+            padding: 15px;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        .player-wrapper {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* BADGE BASE (Círculo para posiciones normales) */
+        .pos-badge {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.65rem;
+            border: 1.5px solid #fff;
+            z-index: 5;
+            transition: all 0.3s ease;
+        }
+
+        /* FIGURA ESPECIAL PARA EL PODIO (Diamante/Rombo) */
+        tr[data-pos="1"] .pos-badge,
+        tr[data-pos="2"] .pos-badge,
+        tr[data-pos="3"] .pos-badge {
+            border-radius: 4px;
+            /* Cambia círculo a cuadrado */
+            transform: rotate(45deg);
+            /* Gira para hacer un diamante */
+            width: 20px;
+            height: 20px;
+            top: -2px;
+            left: -2px;
+            border: 2px solid #fff;
+        }
+
+        /* Corregir la rotación del texto dentro del diamante */
+        tr[data-pos="1"] .pos-badge span,
+        tr[data-pos="2"] .pos-badge span,
+        tr[data-pos="3"] .pos-badge span {
+            transform: rotate(-45deg);
+            display: block;
+        }
+
+        /* Colores y Efectos del Podio */
+        tr[data-pos="1"] .pos-badge {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+            animation: pulse-gold 2s infinite;
+        }
+
+        tr[data-pos="2"] .pos-badge {
+            background: linear-gradient(135deg, #C0C0C0, #8E8E8E);
+            color: #000;
+        }
+
+        tr[data-pos="3"] .pos-badge {
+            background: linear-gradient(135deg, #CD7F32, #8B4513);
+            color: #fff;
+        }
+
+        @keyframes pulse-gold {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 6px rgba(255, 215, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+            }
+        }
+
+        .flag-badge {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 11px;
+            border-radius: 1px;
+            border: 1px solid white;
+            z-index: 2;
+        }
+
+        tr[data-pos="1"] {
+            background-color: #fffdf0;
+        }
+
+        tr[data-pos="2"] {
+            background-color: #f8f9fa;
+        }
+
+        tr[data-pos="3"] {
+            background-color: #fffaf5;
+        }
+
+        .rating-cell {
+            font-weight: 800;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        #loading {
+            padding: 40px;
+            text-align: center;
+            color: #666;
+        }
+
+        #noResults {
+            display: none;
+            padding: 20px;
+            text-align: center;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Buscar ajedrecista...">
+    </div>
+
+    <div class="table-container">
+        <div id="loading">Actualizando ranking...</div>
+        <table id="chessTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Ajedrecista</th>
+                    <th>Nombre</th>
+                    <th>Rtg</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div id="noResults">No se encontró al jugador.</div>
+
+    <script>
+        const SHEET_ID = '11Sb1mrnFtsthIt2opjYkwh3Z9kSli5nzvA-p5cJiIvk';
+        const SHEET_TITLE = 'Rating';
+        const FULL_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_TITLE}`;
+
+        let playersData = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch(FULL_URL);
+                const text = await response.text();
+                const rows = text.split('\n').slice(1);
+
+                playersData = rows.map(row => {
+                    const col = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/"/g, '').trim());
+                    return {
+                        pos: col[0],
+                        name: col[1],
+                        rating: col[2],
+                        photo: col[4] || "https://avatar.iran.liara.run/public"
+                    };
+                }).filter(p => p.name);
+
+                renderTable(playersData);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('chessTable').style.display = 'table';
+            } catch (e) {
+                document.getElementById('loading').innerText = 'Error de conexión.';
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.querySelector("#chessTable tbody");
+            const mexicoFlag = "https://flagcdn.com/w40/mx.png";
+
+            tbody.innerHTML = data.map(player => {
+                // Envolvemos el número en un <span> para poder rotarlo independientemente del diamante
+                return `
+                    <tr data-pos="${player.pos}">
+                        <td>
+                            <div class="player-wrapper">
+                                <div class="pos-badge"><span>${player.pos}</span></div>
+                                <img src="${player.photo}" class="player-photo">
+                                <img src="${mexicoFlag}" class="flag-badge">
+                            </div>
+                        </td>
+                        <td><strong>${player.name}</strong></td>
+                        <td class="rating-cell">${player.rating}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = playersData.filter(p => p.name.toLowerCase().includes(term));
+            renderTable(filtered);
+            document.getElementById('noResults').style.display = filtered.length ? 'none' : 'block';
+        });
+
+        loadData();
+    </script>
+</body>
+
+</html>
