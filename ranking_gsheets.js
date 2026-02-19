@@ -15,8 +15,7 @@ async function loadData() {
             return {
                 pos: col[0],
                 name: col[1],
-                rating: col[2],
-                photo: col[4] || "https://avatar.iran.liara.run/public"
+                rating: col[2]
             };
         }).filter(p => p.name);
 
@@ -33,17 +32,15 @@ function renderTable(data) {
     const mexicoFlag = "https://flagcdn.com/w40/mx.png";
 
     tbody.innerHTML = data.map(player => {
-        // Envolvemos el número en un <span> para poder rotarlo independientemente del diamante
         return `
             <tr data-pos="${player.pos}">
+                <td><div class="pos-badge"><span>${player.pos}</span></div></td>
                 <td>
-                    <div class="player-wrapper">
-                        <div class="pos-badge"><span>${player.pos}</span></div>
-                        <img src="${player.photo}" class="player-photo">
-                        <img src="${mexicoFlag}" class="flag-badge">
+                    <div class="name-cell">
+                        <img src="${mexicoFlag}" class="flag-icon" alt="MX">
+                        <strong>${player.name}</strong>
                     </div>
                 </td>
-                <td><strong>${player.name}</strong></td>
                 <td class="rating-cell">${player.rating}</td>
             </tr>
         `;
